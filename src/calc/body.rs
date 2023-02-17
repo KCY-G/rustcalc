@@ -5,6 +5,7 @@ use yew::prelude::*;
 
 pub struct Body {
     result: Result,
+    initialize: bool,
     buttons: Vec<Button>,
     link: ComponentLink<Self>,
 }
@@ -36,7 +37,9 @@ impl Component for Body {
         Self {
             result: Result {
                 expr: String::new(),
+                back: String::new(),
             },
+            initialize: false,
             buttons,
             link,
         }
@@ -44,19 +47,32 @@ impl Component for Body {
     fn update(&mut self, message: Self::Message) -> ShouldRender {
         match message {
             Msg::Input(c)  => {
+                if self.initialize && c.is_numeric() {
+                    self.update(Msg::Initialize);
+                }
                 self.result.expr.push(c);
+                if c.ne(&'/') {
+                    self.result.back.push(c);
+                } else {
+                    self.result.back.push_str("^1/");
+                }
+                self.initialize = false;
                 true
             }
             Msg::Calculate => {
-                if let Ok(v) = eval(&self.result.expr) {
+                if let Ok(v) = eval(&self.result.back) {
                     self.result.expr = v.to_string();
+                    self.result.back = v.to_string();
+                    self.initialize = true;
                     true
                 } else {
                     false
                 }
             }
             Msg::Initialize => {
-                self.result.expr = "".to_string();
+                self.result.expr = String::new();
+                self.result.back = String::new();
+                self.initialize = false;
                 true
             }
         }
